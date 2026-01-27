@@ -1,0 +1,15 @@
+student_id,first_name,last_name,email,gender,date_of_birth,enrollment_date,program,semester,gpa,credits,city,country
+S001,Asha,Patel,asha.patel@example.com,F,2002-04-12,2023-10-01,Computer Science,3,3.6,78,Munich,Germany
+S002,Noah,Weber,noah.weber@example.com,M,2001-11-30,2022-04-01,Data Science,5,3.2,110,Berlin,Germany
+S003,Elena,Rossi,elena.rossi@example.com,F,2000-07-18,2021-10-01,Software Engineering,7,3.8,160,Milan,Italy
+S004,Arjun,Sharma,arjun.sharma@example.com,M,2002-01-05,2023-04-01,Computer Science,2,3.1,54,Hamburg,Germany
+S005,Marie,Dubois,marie.dubois@example.com,F,2001-03-22,2022-10-01,Data Science,4,3.9,96,Paris,France
+S006,Luca,Bianchi,luca.bianchi@example.com,M,2000-09-09,2021-04-01,Software Engineering,6,2.7,140,Rome,Italy
+S007,Sofia,Schmidt,sofia.schmidt@example.com,F,2002-12-14,2023-10-01,Computer Science,1,3.4,30,Cologne,Germany
+S008,Jonas,Meyer,jonas.meyer@example.com,M,2001-05-27,2022-10-01,Data Science,3,3.0,80,Frankfurt,Germany
+S009,Lea,Wagner,lea.wagner@example.com,F,2000-02-10,2021-10-01,Software Engineering,8,3.7,180,Vienna,Austria
+S010,David,Nguyen,david.nguyen@example.com,M,2002-08-03,2023-04-01,Computer Science,2,3.5,60,Stuttgart,Germany
+S011,Test,NoEmail,,M,2002-06-01,2023-10-01,Computer Science,1,3.0,20,Berlin,Germany
+S012,Bad,Date,bad.date@example.com,F,2002-99-99,2023-10-01,Data Science,2,3.1,40,Munich,Germany
+S013,Bad,Gpa,bad.gpa@example.com,M,2001-01-01,2022-04-01,Software Engineering,4,9.9,90,Hamburg,Germany
+S001,Duplicate,Id,dup.id@example.com,F,2001-01-01,2022-04-01,Computer Science,3,3.2,70,Berlin,Germany
