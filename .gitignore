@@ -1,0 +1,71 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+##################################
+# Secrets / Credentials (CRITICAL)
+##################################
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Spring Boot config with real credentials
+**/application-local.*
+**/application-dev.*
+**/application-prod.*
+
+# Ignore all application configs by default
+**/application-*.yml
+**/application-*.yaml
+**/application-*.properties
+
+# BUT allow example config to be committed
+!**/application.example.yml
+!**/application.example.yaml
+!**/application.example.properties
+
+# Certificates / keys
+*.pem
+*.key
+*.p12
+*.jks
+
+# Docker override files (often contain secrets)
+docker-compose.override.yml
+
