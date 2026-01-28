@@ -1,6 +1,9 @@
 package com.sudarshan.studentetl.etl.csv;
 
 import com.sudarshan.studentetl.config.EtlProperties;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -8,13 +11,8 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 
 
 @Component
@@ -27,38 +25,60 @@ public class StudentCsvReader {
     }
 
     public List<StudentCsvRow> readAll() throws IOException {
+
         Path csvPath = Paths.get(etlProperties.getStudentsCsvPath());
+        String subject = inferSubjectFromPath(csvPath);
 
         try(Reader reader = Files.newBufferedReader(csvPath);
-            CSVParser parser = CSVFormat.DEFAULT
-                    .builder()
+            CSVParser parser = CSVFormat.DEFAULT.
+                    builder()
+                    .setDelimiter(';')
                     .setHeader()
                     .setSkipHeaderRecord(true)
                     .setTrim(true)
-                    .build()
-                    .parse(reader)) {
-
+                    .build().parse(reader))
+        {
             List<StudentCsvRow> rows = new ArrayList<>();
 
-            for(CSVRecord record : parser)
-            {
+            for(CSVRecord record : parser) {
+
                 long rowNumber = record.getRecordNumber() + 1;
 
-                StudentCsvRow row = new StudentCsvRow(
-                        rowNumber,
-                        record.get("student_id"),
-                        record.get("first_name"),
-                        record.get("last_name"),
-                        record.get("email"),
-                        record.get("gender"),
-                        parseDate(record.get("date_of_birth")),
-                        parseDate(record.get("enrollment_date")),
-                        record.get("program"),
-                        parseInt(record.get("semester")),
-                        parseDouble(record.get("gpa")),
-                        parseInt(record.get("credits")),
-                        record.get("city"),
-                        record.get("country")
+                StudentCsvRow row = new StudentCsvRow(rowNumber,
+                        subject,
+                        getSafe(record, "school"),
+                        getSafe(record, "sex"),
+                        getSafe(record, "age"),
+                        getSafe(record, "address"),
+                        getSafe(record, "famsize"),
+                        getSafe(record, "Pstatus"),
+                        getSafe(record, "Medu"),
+                        getSafe(record, "Fedu"),
+                        getSafe(record, "Mjob"),
+                        getSafe(record, "Fjob"),
+                        getSafe(record, "reason"),
+                        getSafe(record, "guardian"),
+                        getSafe(record, "traveltime"),
+                        getSafe(record, "studytime"),
+                        getSafe(record, "failures"),
+                        getSafe(record, "schoolsup"),
+                        getSafe(record, "famsup"),
+                        getSafe(record, "paid"),
+                        getSafe(record, "activities"),
+                        getSafe(record, "nursery"),
+                        getSafe(record, "higher"),
+                        getSafe(record, "internet"),
+                        getSafe(record, "romantic"),
+                        getSafe(record, "famrel"),
+                        getSafe(record, "freetime"),
+                        getSafe(record, "goout"),
+                        getSafe(record, "Dalc"),
+                        getSafe(record, "Walc"),
+                        getSafe(record, "health"),
+                        getSafe(record, "absences"),
+                        getSafe(record, "G1"),
+                        getSafe(record, "G2"),
+                        getSafe(record, "G3")
                 );
 
                 rows.add(row);
@@ -67,36 +87,25 @@ public class StudentCsvReader {
         }
 
     }
-    private LocalDate parseDate(String raw) {
-        if (raw == null || raw.isBlank()) return null;
+
+    private static String getSafe(CSVRecord record, String header)
+    {
         try
         {
-            return LocalDate.parse(raw);
-        }catch (Exception ex)
+            String val = record.get(header);
+            return val == null ? "" : val.trim();
+        }catch (Exception e)
         {
-            return null;
+            return "";
         }
     }
+    private static String inferSubjectFromPath(Path csvPath)
+    {
+        String name = csvPath.getFileName().toString().toLowerCase();
+        if(name.contains("mat")) return "MAT";
+        if(name.contains("por")) return "POR";
 
-    private Integer parseInt(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-
-        try{
-            return Integer.parseInt(raw);
-        }catch (Exception ex)
-        {
-            return null;
-        }
+        return "MAT";
     }
 
-    private Double parseDouble(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-
-        try{
-            return Double.parseDouble(raw);
-
-        }catch (Exception ex){
-            return null;
-        }
-    }
 }

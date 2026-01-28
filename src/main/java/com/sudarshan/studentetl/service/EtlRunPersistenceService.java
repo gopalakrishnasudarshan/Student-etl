@@ -2,21 +2,15 @@ package com.sudarshan.studentetl.service;
 
 import com.sudarshan.studentetl.entity.ETLRunEntity;
 import com.sudarshan.studentetl.entity.EtlRunErrorEntirty;
+import com.sudarshan.studentetl.etl.csv.StudentCsvRow;
 import com.sudarshan.studentetl.etl.csv.StudentRowValidationResult;
 import com.sudarshan.studentetl.repository.EtlRunErrorRepository;
 import com.sudarshan.studentetl.repository.EtlRunRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
+
 
 @Service
 public class EtlRunPersistenceService {
@@ -44,19 +38,32 @@ public class EtlRunPersistenceService {
             if(res.isValid()) continue;
 
             long rowNumber = res.getRow().getRowNumber();
-            String studentId = res.getRow().getStudentId();
-
-            for(String msg : res.getErrors())
-            {
-                errorRepository.save(new EtlRunErrorEntirty(run,rowNumber,studentId,msg));
+           String studentIdLike = buildRowIdentifier(res.getRow());
 
 
-            }
+                for (String msg : res.getErrors()) {
+                    errorRepository.save(new EtlRunErrorEntirty(run, rowNumber, studentIdLike, msg));
+                }
         }
 
         run.markFinished(Instant.now(),"SUCCESS", total, valid, invalid);
         return runRepository.save(run);
 
+
+    }
+
+    private String buildRowIdentifier(StudentCsvRow row) {
+        return String.join("|",
+                nullSafe(row.getSubject()),
+                nullSafe(row.getSchool()),
+                nullSafe(row.getSex()),
+                nullSafe(row.getAge()),
+                nullSafe(row.getG3())
+        );
+
+    }
+    private String nullSafe(String v) {
+        return v == null ? "" : v;
     }
 
 }

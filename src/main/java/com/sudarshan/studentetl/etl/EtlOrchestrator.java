@@ -20,7 +20,7 @@ public class EtlOrchestrator implements CommandLineRunner {
     private final StudentCsvValidator csvValidator;
     private final EtlRunPersistenceService etlRunPersistenceService;
 
-    Instant startedAt = Instant.now();
+
 
     public EtlOrchestrator(StudentCsvReader csvReader, StudentCsvValidator validator, EtlRunPersistenceService etlRunPersistenceService) {
 
@@ -31,16 +31,29 @@ public class EtlOrchestrator implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        Instant startedAt = Instant.now();
         List<StudentCsvRow> rows = csvReader.readAll();
         System.out.println("CSV rows read: " + rows.size());
-        System.out.println("First student_id"+ rows.get(0).getStudentId());
+        if (!rows.isEmpty()) {
+
+            StudentCsvRow first = rows.get(0);
+            System.out.println("First row sample: subject=" + first.getSubject()
+                    + " school=" + first.getSchool()
+                    + " sex=" + first.getSex()
+                    + " age=" + first.getAge()
+                    + " G3=" + first.getG3());
+
+        }
 
         List<StudentRowValidationResult> results = csvValidator.validateAll(rows);
+        ETLRunEntity run = etlRunPersistenceService.persistRun(startedAt, results);
 
+        System.out.println("ETL run saved with id=" + run.getId()
+                + " status=" + run.getStatus()
+                + " total=" + run.getTotalRows()
+                + " valid=" + run.getValidRows()
+                + " invalid=" + run.getInvalidRows());
 
-        ETLRunEntity run = etlRunPersistenceService.persistRun(startedAt,results);
-        System.out.println("ETL run saved with id= "+ run.getId()+ " status= "+run.getStatus()
-        +" total= "+ run.getTotalRows() +" valid= "+run.getValidRows()+ " invalid= "+run.getInvalidRows());
 
 //        long validCount = results.stream().filter(StudentRowValidationResult::isValid).count();
 //        long invalidCount = results.size() - validCount;

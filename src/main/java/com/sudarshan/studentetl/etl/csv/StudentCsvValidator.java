@@ -4,91 +4,111 @@ package com.sudarshan.studentetl.etl.csv;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 
 @Component
 public class StudentCsvValidator {
 
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    private static final Set<String> SCHOOL = Set.of("GP", "MS");
+    private static final Set<String> SEX = Set.of("F", "M");
+    private static final Set<String> ADDRESS = Set.of("U", "R");
+    private static final Set<String> FAMSIZE = Set.of("LE3", "GT3");
+    private static final Set<String> PSTATUS = Set.of("T", "A");
+    private static final Set<String> MJOB = Set.of("teacher", "health", "services", "at_home", "other");
+    private static final Set<String> FJOB = Set.of("teacher", "health", "services", "at_home", "other");
+    private static final Set<String> REASON = Set.of("home", "reputation", "course", "other");
+    private static final Set<String> GUARDIAN = Set.of("mother", "father", "other");
+    private static final Set<String> YESNO = Set.of("yes", "no");
 
-        public List<StudentRowValidationResult> validateAll(List<StudentCsvRow> rows)
+    public List<StudentRowValidationResult> validateAll(List<StudentCsvRow> rows)
+    {
+        List<StudentRowValidationResult> results = new ArrayList<>();
+
+        for(StudentCsvRow row : rows)
         {
+            List<String> errors = new ArrayList<>();
 
-            //avoiding duplicate student id
-            Map<String, Integer> studentIdCounts = new HashMap<>();
-            for(StudentCsvRow row : rows)
-            {
-                String id = row.getStudentId();
-                if(id != null && !id.isBlank())
-                {
-                    studentIdCounts.put(id,studentIdCounts.getOrDefault(id,0) +1);
-                }
+            if (isBlank(row.getSubject()) || !(row.getSubject().equals("MAT") || row.getSubject().equals("POR"))) {
+                errors.add("subject must be MAT or POR");
             }
 
-            List<StudentRowValidationResult> results = new ArrayList<>();
+            requireIn(errors,"school", row.getSchool(), SCHOOL);
+            requireIn(errors, "sex", row.getSex(), SEX);
+            requireIn(errors, "address", row.getAddress(), ADDRESS);
+            requireIn(errors, "famsize", row.getFamsize(), FAMSIZE);
+            requireIn(errors, "Pstatus", row.getPstatus(), PSTATUS);
+            requireIn(errors, "Mjob", row.getMjob(), MJOB);
+            requireIn(errors, "Fjob", row.getFjob(), FJOB);
+            requireIn(errors, "reason", row.getReason(), REASON);
+            requireIn(errors, "guardian", row.getGuardian(), GUARDIAN);
 
-            for(StudentCsvRow row : rows)
-            {
-                List<String> errors = new ArrayList<>();
+            requireIn(errors, "schoolsup", row.getSchoolsup(), YESNO);
+            requireIn(errors, "famsup", row.getFamsup(), YESNO);
+            requireIn(errors, "paid", row.getPaid(), YESNO);
+            requireIn(errors, "activities", row.getActivities(), YESNO);
+            requireIn(errors, "nursery", row.getNursery(), YESNO);
+            requireIn(errors, "higher", row.getHigher(), YESNO);
+            requireIn(errors, "internet", row.getInternet(), YESNO);
+            requireIn(errors, "romantic", row.getRomantic(), YESNO);
 
-                if(isBlank(row.getStudentId())) errors.add("Student_id is missing");
-                if(isBlank(row.getFirstName())) errors.add("first_name is missing");
-                if(isBlank(row.getLastName())) errors.add("last_name is missing");
-                if(isBlank(row.getProgram())) errors.add("program is missing");
+            requireIntBetween(errors, "age", row.getAge(), 15, 22);
+            requireIntBetween(errors, "Medu", row.getMedu(), 0, 4);
+            requireIntBetween(errors, "Fedu", row.getFedu(), 0, 4);
 
-                if(isBlank(row.getEmail()))
-                {
-                    errors.add("email is missing");
-                } else if (!EMAIL_PATTERN.matcher(row.getEmail()).matches()) {
-                    errors.add("email format is invalid");
+            requireIntBetween(errors, "traveltime", row.getTraveltime(), 1, 4);
+            requireIntBetween(errors, "studytime", row.getStudytime(), 1, 4);
+            requireIntBetween(errors, "failures", row.getFailures(), 0, 4);
 
-                }
+            requireIntBetween(errors, "famrel", row.getFamrel(), 1, 5);
+            requireIntBetween(errors, "freetime", row.getFreetime(), 1, 5);
+            requireIntBetween(errors, "goout", row.getGoout(), 1, 5);
+            requireIntBetween(errors, "Dalc", row.getDalc(), 1, 5);
+            requireIntBetween(errors, "Walc", row.getWalc(), 1, 5);
+            requireIntBetween(errors, "health", row.getHealth(), 1, 5);
 
-                if(row.getDateOfBirth() == null)
-                {
-                    errors.add("date_of_birth is invalid or missing");
-                }
+            requireIntBetween(errors, "absences", row.getAbsences(), 0, 93);
 
-                if(row.getEnrollmentDate() == null)
-                {
-                    errors.add("enrollment_date is invalid or missing");
-                }
+            requireIntBetween(errors, "G1", row.getG1(), 0, 20);
+            requireIntBetween(errors, "G2", row.getG2(), 0, 20);
+            requireIntBetween(errors, "G3", row.getG3(), 0, 20);
 
-                if(row.getSemester() == null || row.getSemester() < 1)
-                {
-                    errors.add("semester must be greater than equal (>=) to 1");
-                }
+            results.add(new StudentRowValidationResult(row,errors));
 
-                if(row.getCredits() == null || row.getCredits() < 0)
-                {
-                    errors.add("Credits must be greater than or equal (>=) to 0");
-                }
 
-                if(row.getGpa() == null)
-                {
-                    errors.add("gpa is missing or invalid");
-                } else if (row.getGpa() <0.0 || row.getGpa() > 4.0) {
-                    errors.add("gpa must be between 0.0 and 4.0 ");
+        }
+        return results;
+    }
 
-                }
-                if(!isBlank(row.getStudentId()) && studentIdCounts.getOrDefault(row.getStudentId(),0) > 1){
-                    errors.add("Student id is duplicated in the input file");
-                }
+    private void requireIn(List<String> errors, String field, String value, Set<String> allowed) {
+        if (isBlank(value)) {
+            errors.add(field + " is missing");
+            return;
+        }
+        if (!allowed.contains(value)) {
+            errors.add(field + " has invalid value: " + value);
+        }
+    }
 
-                results.add(new StudentRowValidationResult(row,errors));
+    private void requireIntBetween(List<String> errors, String field, String raw, int min, int max) {
+        if (isBlank(raw)) {
+            errors.add(field + " is missing");
+            return;
+        }
+        try {
+            int v = Integer.parseInt(raw);
+            if (v < min || v > max) {
+                errors.add(field + " must be between " + min + " and " + max);
             }
-                return results;
+        } catch (Exception ex) {
+            errors.add(field + " must be an integer");
         }
+    }
 
-        private boolean isBlank(String value)
-        {
-            return value == null || value.isBlank();
-        }
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 
 
 }
