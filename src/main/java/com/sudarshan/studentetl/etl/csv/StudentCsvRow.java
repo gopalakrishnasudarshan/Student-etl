@@ -4,10 +4,10 @@ public class StudentCsvRow {
 
     private final long rowNumber;
 
-    // We will set this in the ETL (e.g., "MAT" or "POR") based on the input file being processed
+
     private final String subject;
 
-    // UCI columns (exact headers from student-mat.csv)
+
     private final String school;
     private final String sex;
     private final String age;
