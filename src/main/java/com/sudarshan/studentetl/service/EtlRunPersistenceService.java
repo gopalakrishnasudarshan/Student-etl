@@ -24,33 +24,43 @@ public class EtlRunPersistenceService {
     }
 
     @Transactional
-    public ETLRunEntity persistRun(Instant startedAt, List<StudentRowValidationResult> results)
+    public ETLRunEntity createRunAndPersisErrors(Instant startedAt, List<StudentRowValidationResult> results)
     {
-        ETLRunEntity run = new ETLRunEntity(startedAt,"STARTED");
+        ETLRunEntity run = new ETLRunEntity(startedAt, "STARTED");
         run = runRepository.save(run);
-
-        int total = results.size();
-        int valid = (int)results.stream().filter(StudentRowValidationResult::isValid).count();
-        int invalid = total - valid;
 
         for(StudentRowValidationResult res : results)
         {
             if(res.isValid()) continue;
 
             long rowNumber = res.getRow().getRowNumber();
-           String studentIdLike = buildRowIdentifier(res.getRow());
+            String studentIdLike = buildRowIdentifier(res.getRow());
 
-
-                for (String msg : res.getErrors()) {
-                    errorRepository.save(new EtlRunErrorEntirty(run, rowNumber, studentIdLike, msg));
-                }
+            for(String msg : res.getErrors())
+            {
+                errorRepository.save(new EtlRunErrorEntirty(run, rowNumber,studentIdLike, msg));
+            }
         }
+        return run;
+    }
 
-        run.markFinished(Instant.now(),"SUCCESS", total, valid, invalid);
+    @Transactional
+    public ETLRunEntity finishRun(long runId,
+                                  String status,
+                                  int totalRows,
+                                  int validRows,
+                                  int invalidRows,
+                                  int insertedRows,
+                                  int updatedRows){
+        ETLRunEntity run = runRepository.findById(runId)
+                .orElseThrow(() -> new IllegalStateException("ETL Run not found id = "+ runId));
+        run.markFinished(Instant.now(), status, totalRows,validRows,invalidRows, insertedRows,updatedRows);
         return runRepository.save(run);
 
 
     }
+
+
 
     private String buildRowIdentifier(StudentCsvRow row) {
         return String.join("|",

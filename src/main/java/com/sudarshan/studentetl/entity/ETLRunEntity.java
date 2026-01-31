@@ -31,9 +31,18 @@ public class ETLRunEntity {
     @Column(name = "invalid_rows", nullable = false)
     private int invalidRows;
 
+    @Column(name = "inserted_rows", nullable = false)
+    private int insertedRows;
+
+    @Column(name = "updated_rows", nullable = false)
+    private int updatedRows;
+
     protected ETLRunEntity() {
 
     }
+
+
+
     public ETLRunEntity(Instant startedAt, String status)
     {
         this.startedAt = startedAt;
@@ -41,8 +50,18 @@ public class ETLRunEntity {
         this.totalRows = 0;
         this.validRows = 0;
         this.invalidRows = 0;
+        this.insertedRows = 0;
+        this.updatedRows = 0;
+
     }
 
+    public int getInsertedRows() {
+        return insertedRows;
+    }
+
+    public int getUpdatedRows() {
+        return updatedRows;
+    }
     public long getId() {
         return id;
     }
@@ -71,13 +90,15 @@ public class ETLRunEntity {
         return validRows;
     }
 
-    public void markFinished(Instant finishedAt, String status, int totalRows, int validRows, int invalidRows) {
+    public void markFinished(Instant finishedAt, String status, int totalRows, int validRows, int invalidRows, int insertedRows,int updatedRows) {
 
         this.finishedAt = finishedAt;
         this.totalRows = totalRows;
         this.status = status;
         this.validRows = validRows;
         this.invalidRows = invalidRows;
+        this.invalidRows = insertedRows;
+        this.updatedRows = updatedRows;
 
 
     }
