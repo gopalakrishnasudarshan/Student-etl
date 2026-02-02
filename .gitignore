@@ -45,7 +45,11 @@ out/
 .env.*
 *.env
 
+# Explicit infra env file
+student-etl-infra/.env
+
 # Spring Boot config with real credentials
+src/main/resources/application.properties
 **/application-local.*
 **/application-dev.*
 **/application-prod.*
@@ -68,4 +72,3 @@ out/
 
 # Docker override files (often contain secrets)
 docker-compose.override.yml
-
