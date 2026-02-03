@@ -1,5 +1,6 @@
 package com.sudarshan.studentetl.es.export;
 
+
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
@@ -13,90 +14,73 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class PassRateSummaryExporter {
+public class GradeHistogramExporter {
 
-    private static final String VIEW_NAME = "v_pass_rate_summary";
+    private static final String VIEW_NAME = "v_grade_histogram";
+
     private final JdbcTemplate jdbcTemplate;
     private final ElasticsearchClient es;
 
-
-    public PassRateSummaryExporter(JdbcTemplate jdbcTemplate, ElasticsearchClient es) {
+    public GradeHistogramExporter(JdbcTemplate jdbcTemplate, ElasticsearchClient es) {
         this.jdbcTemplate = jdbcTemplate;
         this.es = es;
-
     }
 
     public long export(String indexName, String exportRunId, long etlRunId) throws IOException {
 
-
-
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
-            
-              select
+            select
               subject,
-              student_count as n,
-              passed_count as n_pass,
-              (student_count - passed_count) as n_fail,
-              pass_rate_pct
-                            from
-                v_pass_rate_summary
-            order by subject
-             
+              bucket,
+              count
+            from v_grade_histogram
+            order by subject, bucket
             """);
 
-
-        if(rows.isEmpty()) return 0;
+        if (rows.isEmpty()) return 0;
 
         Instant exportedAt = Instant.now();
-
         List<BulkOperation> ops = new ArrayList<>(rows.size());
 
-        for(Map<String, Object> r: rows){
+        for (Map<String, Object> r : rows) {
             String subject = (String) r.get("subject");
+            int bucket = toInt(r.get("bucket"));
+
+            String id = subject + "|" + bucket;
 
             Map<String, Object> doc = Map.of(
                     "view_name", VIEW_NAME,
                     "export_run_id", exportRunId,
                     "exported_at", exportedAt.toString(),
-
                     "etl_run_id", etlRunId,
 
                     "subject", subject,
-                    "n", toLong(r.get("n")),
-                    "n_pass", toLong(r.get("n_pass")),
-                    "n_fail", toLong(r.get("n_fail")),
-                    "pass_rate_pct", toDouble(r.get("pass_rate_pct"))
+                    "bucket", bucket,
+                    "count", toLong(r.get("count"))
             );
 
             ops.add(BulkOperation.of(op -> op
-                    .index(i -> i
-                            .index(indexName)
-                            .id(subject) // deterministic _id
-                            .document(doc)
-                    )
+                    .index(i -> i.index(indexName).id(id).document(doc))
             ));
         }
-        BulkRequest bulkRequest = BulkRequest.of(b -> b.operations(ops));
-        var resp = es.bulk(bulkRequest);
 
+        var resp = es.bulk(BulkRequest.of(b -> b.operations(ops)));
         if (resp.errors()) {
             throw new IllegalStateException("Bulk indexing had errors: " + resp.items());
         }
 
         return rows.size();
     }
+
     private static long toLong(Object v) {
         if (v == null) return 0L;
         if (v instanceof Number n) return n.longValue();
         return Long.parseLong(v.toString());
     }
 
-    private static double toDouble(Object v) {
-        if (v == null) return 0.0;
-        if (v instanceof Number n) return n.doubleValue();
-        return Double.parseDouble(v.toString());
+    private static int toInt(Object v) {
+        if (v == null) return 0;
+        if (v instanceof Number n) return n.intValue();
+        return Integer.parseInt(v.toString());
     }
-
-
-
 }

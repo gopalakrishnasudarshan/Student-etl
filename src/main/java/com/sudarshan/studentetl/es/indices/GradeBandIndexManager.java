@@ -8,24 +8,21 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
-public class PassRateSummaryIndexManager {
+public class GradeBandIndexManager {
 
-   private final ElasticsearchClient es ;
+    private final ElasticsearchClient es;
 
-   public PassRateSummaryIndexManager(ElasticsearchClient es){
-                this.es = es;
-   }
+    public GradeBandIndexManager(ElasticsearchClient es) {
+        this.es = es;
+    }
 
-
-
-    public String indexName(String prefix){
-        return prefix+"v_pass_rate_summary";
+    public String indexName(String prefix) {
+        return prefix + "v_grade_bands";
     }
 
     public void ensureIndexExists(String indexName) throws IOException {
         boolean exists = es.indices().exists(ExistsRequest.of(b -> b.index(indexName))).value();
-
-        if(exists) return;
+        if (exists) return;
 
         es.indices().create(CreateIndexRequest.of(b -> b
                 .index(indexName)
@@ -38,14 +35,12 @@ public class PassRateSummaryIndexManager {
 
 
                         .properties("subject", p -> p.keyword(k -> k))
-                        .properties("n", p -> p.long_(l -> l))
-                        .properties("n_pass", p -> p.long_(l -> l))
-                        .properties("n_fail", p -> p.long_(l -> l))
-                        .properties("pass_rate_pct", p -> p.double_(d -> d))
+                        .properties("grade_band", p -> p.keyword(k -> k))
+                        .properties("student_count", p -> p.long_(l -> l))
+                        .properties("avg_g3", p -> p.double_(d -> d))
                 )
         ));
-
-
-
     }
+
+
 }

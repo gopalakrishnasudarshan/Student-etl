@@ -13,69 +13,64 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class PassRateSummaryExporter {
+public class AbscenceBucketExporter {
 
-    private static final String VIEW_NAME = "v_pass_rate_summary";
+    private static final String VIEW_NAME = "v_absences_buckets";
+
     private final JdbcTemplate jdbcTemplate;
     private final ElasticsearchClient es;
 
-
-    public PassRateSummaryExporter(JdbcTemplate jdbcTemplate, ElasticsearchClient es) {
+    public AbscenceBucketExporter(JdbcTemplate jdbcTemplate, ElasticsearchClient es) {
         this.jdbcTemplate = jdbcTemplate;
         this.es = es;
-
     }
 
     public long export(String indexName, String exportRunId, long etlRunId) throws IOException {
 
-
-
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
-            
-              select
+            select
               subject,
-              student_count as n,
-              passed_count as n_pass,
-              (student_count - passed_count) as n_fail,
-              pass_rate_pct
-                            from
-                v_pass_rate_summary
-            order by subject
-             
+              absences_bucket,
+              student_count,
+              avg_g3,
+              median_g3
+            from v_absences_buckets
+            order by subject, absences_bucket
             """);
 
-
-        if(rows.isEmpty()) return 0;
+        if (rows.isEmpty()) return 0;
 
         Instant exportedAt = Instant.now();
-
         List<BulkOperation> ops = new ArrayList<>(rows.size());
 
-        for(Map<String, Object> r: rows){
+        for (Map<String, Object> r : rows) {
             String subject = (String) r.get("subject");
+            String bucket = (String) r.get("absences_bucket");
+
+            String id = subject + "|" + bucket;
 
             Map<String, Object> doc = Map.of(
                     "view_name", VIEW_NAME,
                     "export_run_id", exportRunId,
                     "exported_at", exportedAt.toString(),
-
                     "etl_run_id", etlRunId,
 
                     "subject", subject,
-                    "n", toLong(r.get("n")),
-                    "n_pass", toLong(r.get("n_pass")),
-                    "n_fail", toLong(r.get("n_fail")),
-                    "pass_rate_pct", toDouble(r.get("pass_rate_pct"))
+                    "absences_bucket", bucket,
+                    "student_count", toLong(r.get("student_count")),
+                    "avg_g3", toDouble(r.get("avg_g3")),
+                    "median_g3", toDouble(r.get("median_g3"))
             );
 
             ops.add(BulkOperation.of(op -> op
                     .index(i -> i
                             .index(indexName)
-                            .id(subject) // deterministic _id
+                            .id(id)
                             .document(doc)
                     )
             ));
         }
+
         BulkRequest bulkRequest = BulkRequest.of(b -> b.operations(ops));
         var resp = es.bulk(bulkRequest);
 
@@ -85,6 +80,7 @@ public class PassRateSummaryExporter {
 
         return rows.size();
     }
+
     private static long toLong(Object v) {
         if (v == null) return 0L;
         if (v instanceof Number n) return n.longValue();
@@ -96,7 +92,4 @@ public class PassRateSummaryExporter {
         if (v instanceof Number n) return n.doubleValue();
         return Double.parseDouble(v.toString());
     }
-
-
-
 }
