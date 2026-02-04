@@ -1,13 +1,13 @@
 package com.sudarshan.studentetl.es.export;
 
 import com.sudarshan.studentetl.es.indices.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.UUID;
 
@@ -27,10 +27,23 @@ public class AnalyticsExportRunner implements CommandLineRunner {
     private final GradeBandIndexManager gradeBandIndexManager;
 
     private final AbscenceBucketExporter abscenceBucketExporter;
-    private  final AbsenceBucketIndexManager absenceBucketIndexManager;
+    private final AbsenceBucketIndexManager absenceBucketIndexManager;
 
     private final GradeHistogramExporter gradeHistogramExporter;
     private final GradeHistogramIndexManager gradeHistogramIndexManager;
+
+    private final GradeBySexIndexManager gradeBySexIndexManager;
+    private final GradeBySexExporter gradeBySexExporter;
+
+    private final GradeByFailuresIndexManager gradeByFailuresIndexManager;
+    private final GradeByFailuresExporter gradeByFailuresExporter;
+
+    private final G1G2G3ProgressionIndexManager g1G2G3ProgressionIndexManager;
+    private final G1G2G3ProgressionExporter g1G2G3ProgressionExporter;
+
+    private final GradeByStudytimeExporter gradeByStudytimeExporter;
+    private final GradeByStudytimeIndexManager gradeByStudytimeIndexManager;
+
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -45,7 +58,7 @@ public class AnalyticsExportRunner implements CommandLineRunner {
             GradeBandExporter gradeBandExporter,
             GradeBandIndexManager gradeBandIndexManager,
             AbscenceBucketExporter abscenceBucketExporter,
-            AbsenceBucketIndexManager absenceBucketIndexManager, GradeHistogramExporter gradeHistogramExporter, GradeHistogramIndexManager gradeHistogramIndexManager,
+            AbsenceBucketIndexManager absenceBucketIndexManager, GradeHistogramExporter gradeHistogramExporter, GradeHistogramIndexManager gradeHistogramIndexManager, GradeBySexIndexManager gradeBySexIndexManager, GradeBySexExporter gradeBySexExporter, GradeByFailuresIndexManager gradeByFailuresIndexManager, GradeByFailuresExporter gradeByFailuresExporter, G1G2G3ProgressionIndexManager g1G2G3ProgressionIndexManager, G1G2G3ProgressionExporter g1G2G3ProgressionExporter, GradeByStudytimeExporter gradeByStudytimeExporter, GradeByStudytimeIndexManager gradeByStudytimeIndexManager,
             JdbcTemplate jdbcTemplate
     ) {
         this.indexManager = indexManager;
@@ -58,6 +71,14 @@ public class AnalyticsExportRunner implements CommandLineRunner {
         this.absenceBucketIndexManager = absenceBucketIndexManager;
         this.gradeHistogramExporter = gradeHistogramExporter;
         this.gradeHistogramIndexManager = gradeHistogramIndexManager;
+        this.gradeBySexIndexManager = gradeBySexIndexManager;
+        this.gradeBySexExporter = gradeBySexExporter;
+        this.gradeByFailuresIndexManager = gradeByFailuresIndexManager;
+        this.gradeByFailuresExporter = gradeByFailuresExporter;
+        this.g1G2G3ProgressionIndexManager = g1G2G3ProgressionIndexManager;
+        this.g1G2G3ProgressionExporter = g1G2G3ProgressionExporter;
+        this.gradeByStudytimeExporter = gradeByStudytimeExporter;
+        this.gradeByStudytimeIndexManager = gradeByStudytimeIndexManager;
 
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -109,7 +130,7 @@ public class AnalyticsExportRunner implements CommandLineRunner {
         String absencesIndex = absenceBucketIndexManager.indexName(indexPrefix);
         absenceBucketIndexManager.ensureIndexExists(absencesIndex);
 
-        long absencesExported =abscenceBucketExporter.export(
+        long absencesExported = abscenceBucketExporter.export(
                 absencesIndex,
                 exportRunId,
                 etlRunId
@@ -126,14 +147,35 @@ public class AnalyticsExportRunner implements CommandLineRunner {
         );
 
         log.info("EXPORT DONE: v_grade_histogram -> index={} docs={}", gradeHistogramIndex, gradeHistogramExported);
+        String gradeBySexIndex = gradeBySexIndexManager.indexName(indexPrefix);
+        gradeBySexIndexManager.ensureIndexExists(gradeBySexIndex);
+
+        long gradeBySexExported = gradeBySexExporter.export(gradeBySexIndex, exportRunId, etlRunId);
+        log.info("EXPORT DONE: v_grade_by_sex -> index={} docs={}", gradeBySexIndex, gradeBySexExported);
+        String gradeByFailuresIndex = gradeByFailuresIndexManager.indexName(indexPrefix);
+        gradeByFailuresIndexManager.ensureIndexExists(gradeByFailuresIndex);
+
+        long gradeByFailuresExported = gradeByFailuresExporter.export(
+                gradeByFailuresIndex,
+                exportRunId,
+                etlRunId
+        );
+
+        log.info("EXPORT DONE: v_grade_by_failures -> index={} docs={}", gradeByFailuresIndex, gradeByFailuresExported);
+        String indexName = g1G2G3ProgressionIndexManager.indexName(indexPrefix);
+        g1G2G3ProgressionIndexManager.ensureIndexExists(indexName);
+
+        long docs = g1G2G3ProgressionExporter.export(indexName, exportRunId, etlRunId);
+
+        log.info("EXPORT DONE: v_g1_g2_g3_progression -> index={} docs={}", indexName, docs);
+
+        String studytimeIndex = gradeByStudytimeIndexManager.indexName(indexPrefix);
+        gradeByStudytimeIndexManager.ensureIndexExists(studytimeIndex);
+
+        long studytimeDocs = gradeByStudytimeExporter.export(studytimeIndex, exportRunId, etlRunId);
+
+        log.info("EXPORT DONE: v_grade_by_studytime -> index={} docs={}", studytimeIndex, studytimeDocs);
     }
-
-
-
-
-
-
-
 
 
 }
