@@ -52,28 +52,6 @@ Infrastructure
 
 ---
 
-## Project Structure (High Level)
-student-etl/
-├── src/main/java
-│ ├── config
-│ ├── entity
-│ ├── repository
-│ ├── etl
-│ ├── es
-│ │ ├── export
-│ │ └── indices
-│ └── service
-│
-├── src/main/resources
-│ ├── db/migration
-│ └── application.properties
-│
-├── student-etl-infra
-│ └── docker-compose.yml
-│
-└── docs/screenshots
-
----
 
 ## Dataset
 
